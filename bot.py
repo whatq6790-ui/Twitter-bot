@@ -47,7 +47,7 @@ def tweet_random_characters():
         print(f"Error: {e}")
 
 def run_scheduler():
-    schedule.every().day.at("20:00").do(tweet_random_characters)
+    schedule.every().day.at("11:00").do(tweet_random_characters)
     
     while True:
         schedule.run_pending()
