@@ -1,45 +1,66 @@
+import sys
+
+# Python 3.13でimghdrが削除されたため、互換性を保つ
+if sys.version_info >= (3, 13):
+    from unittest.mock import MagicMock
+    sys.modules['imghdr'] = MagicMock()
+
+import os
+import random
+import time
+from datetime import datetime
+from threading import Thread
+
+import dotenv
 import tweepy
 import schedule
-import time
-import random
-import os
-from dotenv import load_dotenv
+from flask import Flask
 
-# .envファイルから環境変数を読み込む
-load_dotenv()
+app = Flask(__name__)
 
-# Twitter APIの認証情報
-CONSUMER_KEY = os.getenv('CONSUMER_KEY')
-CONSUMER_SECRET = os.getenv('CONSUMER_SECRET')
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-ACCESS_TOKEN_SECRET = os.getenv('ACCESS_TOKEN_SECRET')
+# .envファイルを読み込む
+dotenv.load_dotenv('/etc/secrets/.env')
 
-# Tweepyで認証
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-api = tweepy.API(auth)
+api_key = os.environ.get('TWITTER_API_KEY')
+api_secret = os.environ.get('TWITTER_API_SECRET')
+access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
+access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 
-# ランダムに並び替える8文字
+client = tweepy.Client(
+    consumer_key=api_key,
+    consumer_secret=api_secret,
+    access_token=access_token,
+    access_token_secret=access_token_secret
+)
+
 characters = ['御', '奈', '新', 'ヶ', '万', '出', '機', '内']
 
-def post_tweet():
-    """ツイートを投稿する関数"""
-    # 8文字をランダムに並び替える
-    random.shuffle(characters)
-    tweet_text = ''.join(characters)
+@app.route('/')
+def home():
+    return 'Bot is running'
+
+def tweet_random_characters():
+    shuffled = characters.copy()
+    random.shuffle(shuffled)
+    tweet_text = ''.join(shuffled)
     
     try:
-        api.update_status(tweet_text)
-        print(f"ツイート投稿成功: {tweet_text}")
+        response = client.create_tweet(text=tweet_text)
+        print(f"Tweet success: {tweet_text}")
+        print(f"Time: {datetime.now()}")
     except Exception as e:
-        print(f"エラー: {e}")
+        print(f"Error: {e}")
 
-# 毎日20時（夜8時）に投稿するようスケジュール設定
-schedule.every().day.at("11:00").do(post_tweet)
+def run_scheduler():
+    schedule.every().day.at("11:00").do(tweet_random_characters)
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
 
-print("ボットが起動しました。毎日20時にツイートします。")
-
-# スケジュールを常時実行
-while True:
-    schedule.run_pending()
-    time.sleep(60)  # 1分ごとにチェック
+if __name__ == "__main__":
+    scheduler_thread = Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+    
+    port = int(os.environ.get('PORT', 3000))
+    app.run(host='0.0.0.0', port=port)
