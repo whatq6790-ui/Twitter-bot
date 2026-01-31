@@ -21,17 +21,9 @@ api_secret = os.environ.get('TWITTER_API_SECRET')
 access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
 access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 
-print(f"Starting bot...")
-print(f"API Key set: {bool(api_key)}")
-print(f"API Secret set: {bool(api_secret)}")
-print(f"Access Token set: {bool(access_token)}")
-
-client = tweepy.Client(
-    consumer_key=api_key,
-    consumer_secret=api_secret,
-    access_token=access_token,
-    access_token_secret=access_token_secret
-)
+auth = tweepy.OAuthHandler(api_key, api_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth)
 
 characters = ['御', '奈', '新', 'ヶ', '万', '出', '機', '内']
 
@@ -46,7 +38,7 @@ def tweet_test():
     tweet_text = ''.join(shuffled)
     
     try:
-        response = client.create_tweet(text=tweet_text)
+        api.update_status(tweet_text)
         return f"Tweet posted: {tweet_text}"
     except Exception as e:
         return f"Error: {str(e)}"
