@@ -21,9 +21,10 @@ api_secret = os.environ.get('TWITTER_API_SECRET')
 access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
 access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
 
-print(f"API Key: {api_key[:10] if api_key else 'NOT SET'}...")
-print(f"API Secret: {api_secret[:10] if api_secret else 'NOT SET'}...")
-print(f"Access Token: {access_token[:10] if access_token else 'NOT SET'}...")
+print(f"Starting bot...")
+print(f"API Key set: {bool(api_key)}")
+print(f"API Secret set: {bool(api_secret)}")
+print(f"Access Token set: {bool(access_token)}")
 
 client = tweepy.Client(
     consumer_key=api_key,
@@ -53,8 +54,3 @@ def tweet_test():
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port)
-```
-
-修正後、「Manual Deploy」をして、Renderが起動したら、ブラウザで以下にアクセスしてください：
-```
-https://twitter-bot-rynf.onrender.com/tweet
