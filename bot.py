@@ -1,30 +1,29 @@
 import sys
 
-# Python 3.13でimghdrが削除されたため、互換性を保つ
 if sys.version_info >= (3, 13):
     from unittest.mock import MagicMock
     sys.modules['imghdr'] = MagicMock()
 
 import os
 import random
-import time
 from datetime import datetime
-from threading import Thread
 
 import dotenv
 import tweepy
-import schedule
 from flask import Flask
 
 app = Flask(__name__)
 
-# .envファイルを読み込む
 dotenv.load_dotenv('/etc/secrets/.env')
 
 api_key = os.environ.get('TWITTER_API_KEY')
 api_secret = os.environ.get('TWITTER_API_SECRET')
 access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
 access_token_secret = os.environ.get('TWITTER_ACCESS_TOKEN_SECRET')
+
+print(f"API Key: {api_key[:10] if api_key else 'NOT SET'}...")
+print(f"API Secret: {api_secret[:10] if api_secret else 'NOT SET'}...")
+print(f"Access Token: {access_token[:10] if access_token else 'NOT SET'}...")
 
 client = tweepy.Client(
     consumer_key=api_key,
@@ -39,28 +38,23 @@ characters = ['御', '奈', '新', 'ヶ', '万', '出', '機', '内']
 def home():
     return 'Bot is running'
 
-def tweet_random_characters():
+@app.route('/tweet')
+def tweet_test():
     shuffled = characters.copy()
     random.shuffle(shuffled)
     tweet_text = ''.join(shuffled)
     
     try:
         response = client.create_tweet(text=tweet_text)
-        print(f"Tweet success: {tweet_text}")
-        print(f"Time: {datetime.now()}")
+        return f"Tweet posted: {tweet_text}"
     except Exception as e:
-        print(f"Error: {e}")
-
-def run_scheduler():
-    schedule.every().day.at("11:00").do(tweet_random_characters)
-    
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+        return f"Error: {str(e)}"
 
 if __name__ == "__main__":
-    scheduler_thread = Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
-    
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port)
+```
+
+修正後、「Manual Deploy」をして、Renderが起動したら、ブラウザで以下にアクセスしてください：
+```
+https://twitter-bot-rynf.onrender.com/tweet
